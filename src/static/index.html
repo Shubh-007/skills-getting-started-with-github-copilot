@@ -78,16 +78,39 @@
       }
       .participants ul{
         margin:0;
-        padding-left:18px;
+        padding-left:0;
         color:var(--muted);
         font-size:13px;
         line-height:1.6;
+        list-style:none;
       }
       .participants ul li{
         margin-bottom:6px;
         display:flex;
         gap:10px;
         align-items:center;
+      }
+      .delete-btn{
+        margin-left:auto;
+        background:none;
+        border:none;
+        color:#dc2626;
+        font-size:18px;
+        cursor:pointer;
+        padding:0;
+        width:24px;
+        height:24px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:4px;
+        transition:background-color .2s ease;
+      }
+      .delete-btn:hover{
+        background-color:rgba(220,38,38,0.1);
+      }
+      .delete-btn:active{
+        background-color:rgba(220,38,38,0.2);
       }
       .avatar{
         width:28px;height:28px;border-radius:50%;
@@ -180,7 +203,7 @@
             </div>
             <div class="participants">
               <h4>Participants</h4>
-              ${participants.length > 0 ? '<ul>' + participants.map(p => `<li><span class="avatar">${escapeHtml(initialsFromEmail(p))}</span><span>${escapeHtml(p)}</span></li>`).join('') + '</ul>' : '<div class="empty">No participants yet</div>'}
+              ${participants.length > 0 ? '<ul>' + participants.map(p => `<li><span class="avatar">${escapeHtml(initialsFromEmail(p))}</span><span>${escapeHtml(p)}</span><button class="delete-btn" data-activity="${escapeHtml(name)}" data-email="${escapeHtml(p)}" aria-label="Remove ${escapeHtml(p)}">×</button></li>`).join('') + '</ul>' : '<div class="empty">No participants yet</div>'}
             </div>
           `;
           grid.appendChild(card);
@@ -196,6 +219,30 @@
           .replace(/"/g,'&quot;')
           .replace(/'/g,'&#39;');
       }
+
+      // Handle delete participant button clicks
+      document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+          const activity = e.target.dataset.activity;
+          const email = e.target.dataset.email;
+          
+          try {
+            const response = await fetch(
+              `/activities/${encodeURIComponent(activity)}/participants/${encodeURIComponent(email)}`,
+              { method: 'DELETE' }
+            );
+            
+            if (response.ok) {
+              await loadActivities();
+            } else {
+              const error = await response.json();
+              alert('Error: ' + (error.detail || 'Failed to remove participant'));
+            }
+          } catch (err) {
+            alert('Error removing participant: ' + err.message);
+          }
+        }
+      });
 
       // Initial load
       loadActivities();
