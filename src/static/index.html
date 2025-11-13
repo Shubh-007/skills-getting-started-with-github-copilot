@@ -5,46 +5,247 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mergington High School Activities</title>
     <link rel="stylesheet" href="styles.css" />
+    <style>
+      :root{
+        --bg:#f6f8fb;
+        --card:#ffffff;
+        --accent:#4f46e5;
+        --muted:#6b7280;
+        --border:rgba(15,23,42,0.06);
+        --pill-bg:rgba(79,70,229,0.08);
+      }
+      html,body{height:100%}
+      body{
+        margin:0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+        background: linear-gradient(180deg,var(--bg),#ffffff);
+        color:#0f172a;
+        -webkit-font-smoothing:antialiased;
+        -moz-osx-font-smoothing:grayscale;
+        padding:32px;
+      }
+      header{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        margin-bottom:20px;
+      }
+      h1{margin:0;font-size:20px}
+      .grid{
+        display:grid;
+        grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+        gap:20px;
+      }
+      .card{
+        background:var(--card);
+        border:1px solid var(--border);
+        border-radius:12px;
+        padding:16px;
+        box-shadow: 0 4px 10px rgba(2,6,23,0.04);
+        display:flex;
+        flex-direction:column;
+        gap:12px;
+        transition:transform .12s ease,box-shadow .12s ease;
+      }
+      .card:hover{
+        transform:translateY(-6px);
+        box-shadow: 0 10px 30px rgba(2,6,23,0.08);
+      }
+      .meta{
+        display:flex;
+        justify-content:space-between;
+        gap:8px;
+        align-items:center;
+      }
+      .title{font-weight:600;font-size:16px;margin:0}
+      .pill{
+        background:var(--pill-bg);
+        color:var(--accent);
+        padding:6px 10px;
+        border-radius:999px;
+        font-size:12px;
+        font-weight:600;
+      }
+      .desc{color:var(--muted);font-size:13px;margin:0}
+      .small{font-size:13px;color:var(--muted)}
+      .participants{
+        margin-top:6px;
+      }
+      .participants h4{
+        margin:0 0 6px 0;
+        font-size:13px;
+        color:#111827;
+      }
+      .participants ul{
+        margin:0;
+        padding-left:0;
+        color:var(--muted);
+        font-size:13px;
+        line-height:1.6;
+        list-style:none;
+      }
+      .participants ul li{
+        margin-bottom:6px;
+        display:flex;
+        gap:10px;
+        align-items:center;
+      }
+      .delete-btn{
+        margin-left:auto;
+        background:none;
+        border:none;
+        color:#dc2626;
+        font-size:18px;
+        cursor:pointer;
+        padding:0;
+        width:24px;
+        height:24px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:4px;
+        transition:background-color .2s ease;
+      }
+      .delete-btn:hover{
+        background-color:rgba(220,38,38,0.1);
+      }
+      .delete-btn:active{
+        background-color:rgba(220,38,38,0.2);
+      }
+      .avatar{
+        width:28px;height:28px;border-radius:50%;
+        background:#eef2ff;color:var(--accent);
+        display:inline-flex;align-items:center;justify-content:center;
+        font-weight:700;font-size:12px;border:1px solid rgba(79,70,229,0.12);
+      }
+      .empty{
+        color:var(--muted);
+        font-size:13px;
+      }
+      footer{
+        margin-top:26px;
+        color:var(--muted);
+        font-size:13px;
+      }
+      @media (max-width:420px){
+        body{padding:18px}
+      }
+    </style>
   </head>
   <body>
     <header>
-      <h1>Mergington High School</h1>
-      <h2>Extracurricular Activities</h2>
+      <h1>Mergington High — Activities</h1>
+      <div class="small">Powered by the school API</div>
     </header>
 
     <main>
-      <section id="activities-container">
-        <h3>Available Activities</h3>
-        <div id="activities-list">
-          <!-- Activities will be loaded here -->
-          <p>Loading activities...</p>
-        </div>
-      </section>
+      <div id="grid" class="grid" aria-live="polite">
+        <!-- Activity cards inserted here -->
+        <p>Loading activities...</p>
+      </div>
 
-      <section id="signup-container">
-        <h3>Sign Up for an Activity</h3>
-        <form id="signup-form">
-          <div class="form-group">
-            <label for="email">Student Email:</label>
-            <input type="email" id="email" required placeholder="your-email@mergington.edu" />
-          </div>
-          <div class="form-group">
-            <label for="activity">Select Activity:</label>
-            <select id="activity" required>
-              <option value="">-- Select an activity --</option>
-              <!-- Activity options will be loaded here -->
-            </select>
-          </div>
-          <button type="submit">Sign Up</button>
-        </form>
-        <div id="message" class="hidden"></div>
-      </section>
+      <footer>
+        Tip: Signups change dynamically — refresh to see updates.
+      </footer>
     </main>
 
-    <footer>
-      <p>&copy; 2023 Mergington High School</p>
-    </footer>
+    <script>
+      // Fetch activities and render cards with participants list
+      async function loadActivities() {
+        try {
+          const res = await fetch('/activities');
+          if (!res.ok) throw new Error('Failed to load activities');
+          const data = await res.json();
+          renderActivities(data);
+        } catch (err) {
+          const grid = document.getElementById('grid');
+          grid.innerHTML = '<div class="card"><div class="title">Unable to load activities</div><div class="desc">'+(err.message||'')+'</div></div>';
+        }
+      }
 
-    <script src="app.js"></script>
+      function initialsFromEmail(email){
+        const name = email.split('@')[0];
+        const parts = name.split(/[._-]/).filter(Boolean);
+        if (parts.length === 0) return email.slice(0,2).toUpperCase();
+        if (parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+        return (parts[0][0]+parts[1][0]).toUpperCase();
+      }
+
+      function renderActivities(activities){
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        const names = Object.keys(activities).sort();
+        if (names.length === 0) {
+          grid.innerHTML = '<div class="card"><div class="title">No activities found</div></div>';
+          return;
+        }
+
+        for (const name of names) {
+          const a = activities[name];
+          const participants = Array.isArray(a.participants) ? a.participants : [];
+          const participantCount = participants.length;
+          const max = a.max_participants ?? '—';
+
+          const card = document.createElement('article');
+          card.className = 'card';
+          card.innerHTML = `
+            <div class="meta">
+              <div style="min-width:0">
+                <div class="title">${escapeHtml(name)}</div>
+              </div>
+              <div style="text-align:right">
+                <div class="pill">${participantCount}/${max}</div>
+              </div>
+            </div>
+            <div>
+              <div class="desc">${escapeHtml(a.description || '')}</div>
+              <div class="small" style="margin-top:6px"><strong>Schedule:</strong> ${escapeHtml(a.schedule || 'TBD')}</div>
+            </div>
+            <div class="participants">
+              <h4>Participants</h4>
+              ${participants.length > 0 ? '<ul>' + participants.map(p => `<li><span class="avatar">${escapeHtml(initialsFromEmail(p))}</span><span>${escapeHtml(p)}</span><button class="delete-btn" data-activity="${escapeHtml(name)}" data-email="${escapeHtml(p)}" aria-label="Remove ${escapeHtml(p)}">×</button></li>`).join('') + '</ul>' : '<div class="empty">No participants yet</div>'}
+            </div>
+          `;
+          grid.appendChild(card);
+        }
+      }
+
+      // minimal HTML escaper
+      function escapeHtml(str){
+        return String(str)
+          .replace(/&/g,'&amp;')
+          .replace(/</g,'&lt;')
+          .replace(/>/g,'&gt;')
+          .replace(/"/g,'&quot;')
+          .replace(/'/g,'&#39;');
+      }
+
+      // Handle delete participant button clicks
+      document.addEventListener('click', async (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+          const activity = e.target.dataset.activity;
+          const email = e.target.dataset.email;
+          
+          try {
+            const response = await fetch(
+              `/activities/${encodeURIComponent(activity)}/participants/${encodeURIComponent(email)}`,
+              { method: 'DELETE' }
+            );
+            
+            if (response.ok) {
+              await loadActivities();
+            } else {
+              const error = await response.json();
+              alert('Error: ' + (error.detail || 'Failed to remove participant'));
+            }
+          } catch (err) {
+            alert('Error removing participant: ' + err.message);
+          }
+        }
+      });
+
+      // Initial load
+      loadActivities();
+    </script>
   </body>
 </html>
