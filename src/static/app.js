@@ -23,14 +23,14 @@ document.addEventListener("DOMContentLoaded", () => {
         // Build participants list
         const participantsHtml = details.participants.length > 0
           ? `<ul>${details.participants.map(p => `<li>${p}</li>`).join('')}</ul>`
-          : `<p style="color: #999; font-style: italic;">No participants yet</p>`;
+          : `<p class="participants-empty">No participants yet</p>`;
 
         activityCard.innerHTML = `
           <h4>${name}</h4>
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
-          <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ddd;">
+          <div class="participants-section">
             <strong>Participants:</strong>
             ${participantsHtml}
           </div>

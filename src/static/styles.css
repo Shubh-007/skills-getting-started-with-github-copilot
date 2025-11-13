@@ -121,20 +121,20 @@ footer {
   color: #555;
 }
 
-.activity-card div[style*="border-top"] {
+.participants-section {
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid #ddd;
 }
 
-.activity-card div[style*="border-top"] strong {
+.participants-section strong {
   display: block;
   margin-bottom: 8px;
   color: #1a237e;
   font-size: 14px;
 }
 
-.activity-card div[style*="border-top"] p {
+.participants-empty {
   color: #999;
   font-style: italic;
   margin: 0;
